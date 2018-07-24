@@ -23,6 +23,8 @@ dotfiles: ## Installs the dotfiles.
 	git update-index --skip-worktree $(CURDIR)/.gitconfig;
 	mkdir -p $(HOME)/.config;
 	ln -snf $(CURDIR)/.i3 $(HOME)/.config/sway;
+	ln -snf $(CURDIR)/.antibody $(HOME)/.config/antibody;
+	ln -snf $(CURDIR)/.alacritty $(HOME)/.config/alacritty;
 	mkdir -p $(HOME)/.local/share;
 	ln -snf $(CURDIR)/.fonts $(HOME)/.local/share/fonts;
 	ln -snf $(CURDIR)/.bash_profile $(HOME)/.profile;
