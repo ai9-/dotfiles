@@ -8,6 +8,9 @@ for file in ~/.{zsh_conf,aliases,functions,path,dockerfunc,extra,exports}; do
 		source "$file"
 	fi
 done
+if [[ -z $DISPLAY ]] && [[ $(tty) = /dev/tty1 ]]; then
+  XKB_DEFAULT_LAYOUT=us exec sway
+fi
 unset file
 #source ~/.dotfiles/zsh/completion.zsh
 # forces zsh to realize new commands
