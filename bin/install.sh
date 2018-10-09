@@ -59,11 +59,19 @@ setup_sources_min() {
 	deb-src http://ppa.launchpad.net/neovim-ppa/unstable/ubuntu xenial main
 	EOF
 
+	# iovisor/bcc-tools
+	cat <<-EOF > /etc/apt/sources.list.d/iovisor.list
+	deb https://repo.iovisor.org/apt/xenial xenial main
+	EOF
+
 	# add the git-core ppa gpg key
 	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys E1DD270288B4E6030699E45FA1715D88E1DF1F24
 
 	# add the neovim ppa gpg key
 	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 9DBB0BE9366964F134855E2255F96FCF8231B6DD
+
+	# add the iovisor/bcc-tools gpg key
+	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 648A4A16A23015EEF4A66B8E4052245BD4284CDD
 
 	# turn off translations, speed up apt update
 	mkdir -p /etc/apt/apt.conf.d
@@ -87,11 +95,16 @@ setup_sources() {
 
 	deb http://httpredir.debian.org/debian experimental main contrib non-free
 	deb-src http://httpredir.debian.org/debian experimental main contrib non-free
+	EOF
 
 	# yubico
+	cat <<-EOF > /etc/apt/sources.list.d/yubico.list
 	deb http://ppa.launchpad.net/yubico/stable/ubuntu xenial main
 	deb-src http://ppa.launchpad.net/yubico/stable/ubuntu xenial main
+	EOF
 
+	# tlp: Advanced Linux Power Management
+	cat <<-EOF > /etc/apt/sources.list.d/tlp.list
 	# tlp: Advanced Linux Power Management
 	# http://linrunner.de/en/tlp/docs/tlp-linux-advanced-power-management.html
 	deb http://repo.linrunner.de/debian sid main
@@ -102,13 +115,17 @@ setup_sources() {
 	export CLOUD_SDK_REPO
 
 	# Add the Cloud SDK distribution URI as a package source
-	echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" > /etc/apt/sources.list.d/google-cloud-sdk.list
+	cat <<-EOF > /etc/apt/sources.list.d/google-cloud-sdk.list
+	deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main
+	EOF
 
 	# Import the Google Cloud Platform public key
 	curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 
 	# Add the Google Chrome distribution URI as a package source
-	echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+	cat <<-EOF > /etc/apt/sources.list.d/google-chrome.list
+	deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main
+	EOF
 
 	# Import the Google Chrome public key
 	curl https://dl.google.com/linux/linux_signing_key.pub | apt-key add -
@@ -117,7 +134,7 @@ setup_sources() {
 	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 3653E21064B19D134466702E43D5C49532CBA1A9
 
 	# add the tlp apt-repo gpg key
-	apt-key adv --keyserver pool.sks-keyservers.net --recv-keys CD4E8809
+	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 6B283E95745A6D903009F7CA641EED65CD4E8809
 }
 
 base_min() {
@@ -136,44 +153,31 @@ base_min() {
 		dnsutils \
 		file \
 		findutils \
-		fwupd \
-		fwupdate \
 		gcc \
 		git \
 		gnupg \
 		gnupg2 \
-		gnupg-agent \
 		grep \
 		gzip \
 		hostname \
 		indent \
 		iptables \
-		iwd \
 		jq \
 		less \
 		libc6-dev \
-		libimobiledevice6 \
-		libpam-systemd \
 		locales \
 		lsof \
 		make \
 		mount \
 		net-tools \
 		neovim \
-		pinentry-curses \
-		rxvt-unicode-256color \
-		scdaemon \
 		ssh \
 		strace \
 		sudo \
-		systemd \
 		tar \
 		tree \
 		tzdata \
-		usbmuxd \
 		unzip \
-		xclip \
-		xcompmgr \
 		xz-utils \
 		zip \
 		--no-install-recommends
@@ -198,10 +202,23 @@ base() {
 		apparmor \
 		bridge-utils \
 		cgroupfs-mount \
+		fwupd \
+		fwupdate \
+		gnupg-agent \
 		google-cloud-sdk \
+		iwd \
 		libapparmor-dev \
+		libimobiledevice6 \
 		libltdl-dev \
+		libpam-systemd \
 		libseccomp-dev \
+		pinentry-curses \
+		rxvt-unicode-256color \
+		scdaemon \
+		systemd \
+		usbmuxd \
+		xclip \
+		xcompmgr \
 		--no-install-recommends
 
 	setup_sudo
@@ -258,7 +275,7 @@ setup_sudo() {
 
 	# add go path to secure path
 	{ \
-		echo -e "Defaults	secure_path=\"/usr/local/go/bin:/home/${USERNAME}/.go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\""; \
+		echo -e "Defaults	secure_path=\"/usr/local/go/bin:/home/${TARGET_USER}/.go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/bcc/tools\""; \
 		echo -e 'Defaults	env_keep += "ftp_proxy http_proxy https_proxy no_proxy GOPATH EDITOR"'; \
 		echo -e "${TARGET_USER} ALL=(ALL) NOPASSWD:ALL"; \
 		echo -e "${TARGET_USER} ALL=NOPASSWD: /sbin/ifconfig, /sbin/ifup, /sbin/ifdown, /sbin/ifquery"; \
@@ -319,6 +336,8 @@ install_golang() {
 	go get github.com/genuinetools/amicontained
 	go get github.com/genuinetools/apk-file
 	go get github.com/genuinetools/audit
+	go get github.com/genuinetools/bpfd
+	go get github.com/genuinetools/bpfps
 	go get github.com/genuinetools/certok
 	go get github.com/genuinetools/netns
 	go get github.com/genuinetools/pepper
